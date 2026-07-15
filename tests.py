@@ -3,6 +3,9 @@ import math
 import scipy.io as sio
 import numpy as np
 
+six_point_face = sio.loadmat('D:\MPIIGaze\MPIIGaze\Data\Original\p00\Calibration\\Camera.mat')
+print(six_point_face)
+
 path = "D:\\MPIIGaze\MPIIGaze\Data\Original\p00\day01\\annotation.txt"
 with open(path, "r", encoding="utf-8") as f:
     text = f.readline().split()

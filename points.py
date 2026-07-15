@@ -62,6 +62,7 @@ with open(path, "r", encoding="utf-8") as f:
 for i in range(1, len(text)-4, 2):
     print(text[i])
     cv2.circle(frame, (int(text[i]), int(text[i+1])), 2, (0, 255, 0), -1)
+    cv2.putText(frame, str(i), (int(text[i]), int(text[i+1])), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 1)
 
 cv2.imwrite('output_face_points.jpg', frame)
 cv2.imshow('Face Points', frame)
