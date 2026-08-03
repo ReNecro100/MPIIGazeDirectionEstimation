@@ -36,12 +36,6 @@ def yes(six_point_face, path, camera):
             flags=cv2.SOLVEPNP_EPNP
         )
 
-        # 6. Преобразуем в углы Эйлера
-        rotation_matrix, _ = cv2.Rodrigues(rotation_vector)
-        euler_angles = cv2.decomposeProjectionMatrix(
-            np.hstack((rotation_matrix, translation_vector))
-        )[6]
-
         #print(euler_angles.flatten())
 
         rts.append({

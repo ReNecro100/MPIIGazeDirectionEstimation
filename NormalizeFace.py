@@ -37,9 +37,9 @@ def NormalizeFace(six_point_face, path, rtvecs, camera):
     canvas = cv2.imread(path+'/'+rtvecs[0]["image_info"][0])
 
     # Display the image using [PyImageSearch] or [Stack Overflow] techniques
-    cv2.imshow("Projected 3D Points", canvas)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    # cv2.imshow("Projected 3D Points", canvas)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
 
     M, _ = cv2.estimateAffinePartial2D(
         image_points, projected_points
@@ -48,9 +48,42 @@ def NormalizeFace(six_point_face, path, rtvecs, camera):
     h, w = canvas.shape[:2]
     normalized = cv2.warpAffine(canvas, M, (w, h))
 
+    # Левый глаз (индексы 0 и 1 — внешний и внутренний)
+    left_center_x = int((projected_points[0][0] + projected_points[1][0]) / 2)
+    left_center_y = int((projected_points[0][1] + projected_points[1][1]) / 2)
+
+    # Правый глаз (индексы 2 и 3 — внешний и внутренний)
+    right_center_x = int((projected_points[2][0] + projected_points[3][0]) / 2)
+    right_center_y = int((projected_points[2][1] + projected_points[3][1]) / 2)
+
+    # Вырезаем квадрат 60x60 вокруг центра
+    eye_size = 30  # половина размера (итого 60x60)
+    left_eye = normalized[
+               left_center_y - eye_size: left_center_y + eye_size,
+               left_center_x - eye_size: left_center_x + eye_size
+               ]
+    right_eye = normalized[
+                right_center_y - eye_size: right_center_y + eye_size,
+                right_center_x - eye_size: right_center_x + eye_size
+                ]
+
     for i in range(6):
         cv2.circle(normalized, np.array(projected_points[i], dtype=int), 2, (0, 0, 255), 2)
 
     cv2.imshow("Projected 3D Points", normalized)
+    cv2.imshow("Left eye", left_eye)
+    cv2.imshow("Right eye", right_eye)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+
+    # 6. Преобразуем в углы Эйлера
+    rotation_matrix, _ = cv2.Rodrigues(rtvecs[0]["rotation_vector"])
+    euler_angles = cv2.decomposeProjectionMatrix(
+        np.hstack((rotation_matrix, rtvecs[0]["translation_vector"]))
+    )[6]
+
+    return {
+        "left_eye": left_eye,
+        "right_eye": right_eye,
+        "euler_angles": euler_angles,
+    }
