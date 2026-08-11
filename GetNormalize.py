@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-def yes(six_point_face, path, camera):
+def yes(strink, six_point_face, camera):
     # Загружаем 3D-модель - six_point_face
 
     # 1. 3D-модель - ТРАНСПОНИРУЕМ!
@@ -13,35 +13,28 @@ def yes(six_point_face, path, camera):
     dist_coeffs = camera['distCoeffs'].reshape(-1, 1).astype(np.float64)
 
     # 2. 2D-точки из аннотации
-    with open(path, "r", encoding="utf-8") as f:
-        texts = [i.split() for i in f.readlines()]
 
-    rts = []
-    for text in texts:
-        image_points = np.array([
-            [float(text[1]), float(text[2])],  # внешний левый (индекс 0)
-            [float(text[3]), float(text[4])],  # внутренний левый (индекс 1)
-            [float(text[5]), float(text[6])],  # внутренний правый (индекс 2)
-            [float(text[7]), float(text[8])],  # внешний правый (индекс 3)
-            [float(text[9]), float(text[10])],  # левый рот (индекс 4)
-            [float(text[11]), float(text[12])]  # правый рот (индекс 5)
-        ], dtype=np.float64)
 
-        # 5. Запускаем solvePnP
-        success, rotation_vector, translation_vector = cv2.solvePnP(
-            model_points,
-            image_points,
-            camera_matrix,
-            dist_coeffs,
-            flags=cv2.SOLVEPNP_EPNP
-        )
+    image_points = np.array([
+        [float(strink[1]), float(strink[2])],  # внешний левый (индекс 0)
+        [float(strink[3]), float(strink[4])],  # внутренний левый (индекс 1)
+        [float(strink[5]), float(strink[6])],  # внутренний правый (индекс 2)
+        [float(strink[7]), float(strink[8])],  # внешний правый (индекс 3)
+        [float(strink[9]), float(strink[10])],  # левый рот (индекс 4)
+        [float(strink[11]), float(strink[12])]  # правый рот (индекс 5)
+    ], dtype=np.float64)
 
-        #print(euler_angles.flatten())
+    # 5. Запускаем solvePnP
+    success, rotation_vector, translation_vector = cv2.solvePnP(
+        model_points,
+        image_points,
+        camera_matrix,
+        dist_coeffs,
+        flags=cv2.SOLVEPNP_EPNP
+    )
 
-        rts.append({
-            'image_info': text,
+    return {
+            'image_info': strink,
             'rotation_vector': rotation_vector,
             'translation_vector': translation_vector,
-        })
-
-    return rts
+        }

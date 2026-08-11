@@ -1,8 +1,9 @@
 import cv2
 import numpy as np
+import linecache
 
 def NormalizeFace(six_point_face, path, rtvecs, camera):
-    text = rtvecs[0]['image_info']
+    text = rtvecs['image_info']
     image_points = np.array([
         [float(text[1]), float(text[2])],  # внешний левый (индекс 0)
         [float(text[3]), float(text[4])],  # внутренний левый (индекс 1)
@@ -15,7 +16,7 @@ def NormalizeFace(six_point_face, path, rtvecs, camera):
     # 1. 3D-модель - ТРАНСПОНИРУЕМ!
     model_points_raw = np.array(six_point_face['model'], dtype=np.float64)
 
-    rotation_matrix, _ = cv2.Rodrigues(rtvecs[0]["rotation_vector"])
+    rotation_matrix, _ = cv2.Rodrigues(rtvecs["rotation_vector"])
     model_points = (rotation_matrix.T @ model_points_raw).T
 
     #model_points = model_points_raw.T  # <-- (3,6) -> (6,3)
@@ -25,8 +26,8 @@ def NormalizeFace(six_point_face, path, rtvecs, camera):
 
     projected_points, _ = cv2.projectPoints(
         model_points,
-        rtvecs[0]["rotation_vector"],
-        rtvecs[0]["translation_vector"],
+        rtvecs["rotation_vector"],
+        rtvecs["translation_vector"],
         camera_matrix,
         dist_coeffs
     )
@@ -34,12 +35,7 @@ def NormalizeFace(six_point_face, path, rtvecs, camera):
     projected_points = projected_points.reshape(-1, 2)
 
     # 4. Draw the projected points on an empty 640x480 canvas
-    canvas = cv2.imread(path+'/'+rtvecs[0]["image_info"][0])
-
-    # Display the image using [PyImageSearch] or [Stack Overflow] techniques
-    # cv2.imshow("Projected 3D Points", canvas)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
+    canvas = cv2.imread(path+'/'+rtvecs["image_info"][0])
 
     M, _ = cv2.estimateAffinePartial2D(
         image_points, projected_points
@@ -57,33 +53,42 @@ def NormalizeFace(six_point_face, path, rtvecs, camera):
     right_center_y = int((projected_points[2][1] + projected_points[3][1]) / 2)
 
     # Вырезаем квадрат 60x60 вокруг центра
-    eye_size = 30  # половина размера (итого 60x60)
+    eye_size_x = 30  # половина размера (итого 60x36)
+    eye_size_y = 18
     left_eye = normalized[
-               left_center_y - eye_size: left_center_y + eye_size,
-               left_center_x - eye_size: left_center_x + eye_size
+               left_center_y - eye_size_y: left_center_y + eye_size_y,
+               left_center_x - eye_size_x: left_center_x + eye_size_x
                ]
     right_eye = normalized[
-                right_center_y - eye_size: right_center_y + eye_size,
-                right_center_x - eye_size: right_center_x + eye_size
+                right_center_y - eye_size_y: right_center_y + eye_size_y,
+                right_center_x - eye_size_x: right_center_x + eye_size_x
                 ]
 
     for i in range(6):
         cv2.circle(normalized, np.array(projected_points[i], dtype=int), 2, (0, 0, 255), 2)
 
-    cv2.imshow("Projected 3D Points", normalized)
-    cv2.imshow("Left eye", left_eye)
-    cv2.imshow("Right eye", right_eye)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    # cv2.imshow("Projected 3D Points", normalized)
+    # cv2.imshow("Left eye", left_eye)
+    # cv2.imshow("Right eye", right_eye)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
 
     # 6. Преобразуем в углы Эйлера
-    rotation_matrix, _ = cv2.Rodrigues(rtvecs[0]["rotation_vector"])
     euler_angles = cv2.decomposeProjectionMatrix(
-        np.hstack((rotation_matrix, rtvecs[0]["translation_vector"]))
+        np.hstack((rotation_matrix, rtvecs["translation_vector"]))
     )[6]
 
+    #Нужен выход - gaze vector:
+    #day16/0151.jpg
+
+    small_path = rtvecs["image_info"][0]
+    line = linecache.getline(path+'/'+small_path.split('/')[0]+"/annotation.txt", int(small_path.split('/')[1][:4]))
+    line = line.split(' ')
+
+    gaze_vector = np.array([float(line[26]),float(line[27]),float(line[28])])
     return {
         "left_eye": left_eye,
         "right_eye": right_eye,
         "euler_angles": euler_angles,
+        "gaze_vector": gaze_vector,
     }
