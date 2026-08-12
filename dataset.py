@@ -6,14 +6,14 @@ import scipy.io as sio
 
 import NormalizeFace
 
-class CyrillicLettersDataset(Dataset):
-    def __init__(self, img_dir, transform=None, is_train=True):
+class MPIIGazesDataset(Dataset):
+    def __init__(self, transform=None, is_train=True):
         #Сделать лист с инфой
         self.learner = []
         six_point_face = sio.loadmat(r'D:\MPIIGaze\MPIIGaze\6 points-based face model.mat')
         for participant in range(0,15):
             if participant < 10:
-                participant = '0' + str(participant)
+                participant = "0"+str(participant)
             else:
                 participant = str(participant)
             path = f"D:\MPIIGaze\MPIIGaze\Annotation Subset\p{participant}.txt"
@@ -22,9 +22,10 @@ class CyrillicLettersDataset(Dataset):
             with open(path, "r", encoding="utf-8") as f:
                 strinks = [i.split() for i in f.readlines()]
 
-            for i in strinks:
+            for idx, i in enumerate(strinks):
+                print(f"p{participant}: {idx}/{len(strinks)}")
                 a = GetNormalize.yes(i, six_point_face, camera)
-                b = NormalizeFace.NormalizeFace(six_point_face, 'D:\MPIIGaze\MPIIGaze\Data\Original\p00', a, camera)
+                b = NormalizeFace.NormalizeFace(six_point_face, f'D:\MPIIGaze\MPIIGaze\Data\Original\p{participant}', a, camera)
                 self.learner.append(b)
 
     def __len__(self):
