@@ -15,22 +15,24 @@ class GazeCNN(nn.Module):
 
         # ===== Свёрточная часть (обрабатывает каждый глаз) =====
         # По инструкции: 2 свёрточных слоя
-        self.conv1 = nn.Conv2d(3, 32, kernel_size=5, stride=1, padding=2)
+        self.conv1 = nn.Conv2d(3, 64, kernel_size=5, stride=1, padding=2)
         self.pool1 = nn.MaxPool2d(2, 2)  # уменьшаем размер в 2 раза
 
-        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, stride=1, padding=1)
+        self.conv2 = nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1)
         self.pool2 = nn.MaxPool2d(2, 2)  # уменьшаем размер в 2 раза
+
+        self.conv3 = nn.Conv2d(64, 256, kernel_size=3, stride=1, padding=1)
 
         # ===== Полносвязная часть для глаз =====
         # Размер после свёрток для входа 60×36:
         # после pool1: 30×18, после pool2: 15×9
-        self.fc_eye = nn.Linear(64 * 15 * 9, 128)
+        self.fc_eye = nn.Linear(256 * 15 * 9, 128)
         self.dropout = nn.Dropout(0.5)
 
         # ===== Объединение признаков глаз + поза головы =====
         # Поза головы — 3 числа (pitch, yaw, roll)
         self.fc1 = nn.Linear(128 * 2 + 3, 64)  # *2 — два глаза, +3 — поза
-        self.fc2 = nn.Linear(64, 2)  # на выходе 2 числа: gaze_pitch, gaze_yaw
+        self.fc2 = nn.Linear(64, 3)  # на выходе 2 числа: gaze_pitch, gaze_yaw
 
     def forward(self, left_eye, right_eye, head_pose):
         """
@@ -44,6 +46,9 @@ class GazeCNN(nn.Module):
         x = self.pool1(x)
         x = F.relu(self.conv2(x))
         x = self.pool2(x)
+
+        x = F.relu(self.conv3(x))
+
         x = x.view(x.size(0), -1)  # flatten
         x = F.relu(self.fc_eye(x))
 
@@ -52,11 +57,14 @@ class GazeCNN(nn.Module):
         y = self.pool1(y)
         y = F.relu(self.conv2(y))
         y = self.pool2(y)
+
+        y = F.relu(self.conv3(y))
+
         y = y.view(y.size(0), -1)
         y = F.relu(self.fc_eye(y))
 
         # ===== Объединение =====
-        combined = torch.cat([x, y, head_pose], dim=1)  # (128+128+3) = 259
+        combined = torch.cat([x.float(), y.float(), head_pose.squeeze(-1).float()], dim=1)  # (128+128+3) = 259
         z = F.relu(self.fc1(combined))
         z = self.dropout(z)
         gaze = self.fc2(z)

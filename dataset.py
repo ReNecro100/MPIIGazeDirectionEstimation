@@ -1,5 +1,4 @@
-from torch.utils.data import Dataset, DataLoader
-from PIL import Image
+from torch.utils.data import Dataset
 import GetNormalize
 import cv2
 import scipy.io as sio
@@ -7,11 +6,15 @@ import scipy.io as sio
 import NormalizeFace
 
 class MPIIGazesDataset(Dataset):
-    def __init__(self, transform=None, is_train=True):
+    def __init__(self, transform=None, is_train=True, write_creation_process=False):
         #Сделать лист с инфой
         self.learner = []
         six_point_face = sio.loadmat(r'D:\MPIIGaze\MPIIGaze\6 points-based face model.mat')
-        for participant in range(0,15):
+        if is_train:
+            participations_range = range(0,14)
+        else:
+            participations_range = [14]
+        for participant in participations_range:
             if participant < 10:
                 participant = "0"+str(participant)
             else:
@@ -23,7 +26,8 @@ class MPIIGazesDataset(Dataset):
                 strinks = [i.split() for i in f.readlines()]
 
             for idx, i in enumerate(strinks):
-                print(f"p{participant}: {idx}/{len(strinks)}")
+                if write_creation_process:
+                    print(f"p{participant}: {idx}/{len(strinks)}")
                 a = GetNormalize.yes(i, six_point_face, camera)
                 b = NormalizeFace.NormalizeFace(six_point_face, f'D:\MPIIGaze\MPIIGaze\Data\Original\p{participant}', a, camera)
                 self.learner.append(b)

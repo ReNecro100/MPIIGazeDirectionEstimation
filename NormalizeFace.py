@@ -64,6 +64,11 @@ def NormalizeFace(six_point_face, path, rtvecs, camera):
                 right_center_x - eye_size_x: right_center_x + eye_size_x
                 ]
 
+    left_eye = left_eye.astype(np.float32) / 255.0
+    right_eye = right_eye.astype(np.float32) / 255.0
+
+
+
     for i in range(6):
         cv2.circle(normalized, np.array(projected_points[i], dtype=int), 2, (0, 0, 255), 2)
 
@@ -87,8 +92,8 @@ def NormalizeFace(six_point_face, path, rtvecs, camera):
 
     gaze_vector = np.array([float(line[26]),float(line[27]),float(line[28])])
     return {
-        "left_eye": left_eye,
-        "right_eye": right_eye,
+        "left_eye": left_eye.transpose(2, 1, 0),
+        "right_eye": right_eye.transpose(2, 1, 0),
         "euler_angles": euler_angles,
         "gaze_vector": gaze_vector,
     }
