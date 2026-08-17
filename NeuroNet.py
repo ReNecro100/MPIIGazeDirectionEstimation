@@ -4,69 +4,75 @@ import torch.nn.functional as F
 
 
 class GazeCNN(nn.Module):
-    """
-    Multimodal CNN for gaze estimation.
-    Input: eye images + head pose
-    Output: gaze direction
-    """
-
     def __init__(self):
         super(GazeCNN, self).__init__()
 
-        # ===== Свёрточная часть (обрабатывает каждый глаз) =====
-        # По инструкции: 2 свёрточных слоя
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=5, stride=1, padding=2)
-        self.pool1 = nn.MaxPool2d(2, 2)  # уменьшаем размер в 2 раза
+        # ===== Свёртки + BatchNorm =====
+        self.conv1 = nn.Conv2d(6, 64, kernel_size=5, stride=1, padding=2)
+        self.bn1 = nn.BatchNorm2d(64)
+        self.pool1 = nn.MaxPool2d(2, 2)
 
-        self.conv2 = nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1)
-        self.pool2 = nn.MaxPool2d(2, 2)  # уменьшаем размер в 2 раза
+        self.conv2 = nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1)
+        self.bn2 = nn.BatchNorm2d(128)
+        self.pool2 = nn.MaxPool2d(2, 2)
 
-        self.conv3 = nn.Conv2d(64, 256, kernel_size=3, stride=1, padding=1)
+        self.conv3 = nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1)
+        self.bn3 = nn.BatchNorm2d(256)
+        self.pool3 = nn.MaxPool2d(2, 2)
 
-        # ===== Полносвязная часть для глаз =====
-        # Размер после свёрток для входа 60×36:
-        # после pool1: 30×18, после pool2: 15×9
-        self.fc_eye = nn.Linear(256 * 15 * 9, 128)
-        self.dropout = nn.Dropout(0.5)
+        self.conv4 = nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=1)
+        self.bn4 = nn.BatchNorm2d(512)
+        self.pool4 = nn.MaxPool2d(2, 2)
 
-        # ===== Объединение признаков глаз + поза головы =====
-        # Поза головы — 3 числа (pitch, yaw, roll)
-        self.fc1 = nn.Linear(128 * 2 + 3, 64)  # *2 — два глаза, +3 — поза
-        self.fc2 = nn.Linear(64, 3)  # на выходе 2 числа: gaze_pitch, gaze_yaw
+        # ===== Полносвязная часть =====
+        # Размер входа: 512 * (60/16) * (36/16) = 512 * 3 * 2 = 3072
+        self.fc_eye = nn.Sequential(
+            nn.Linear(3072, 256),
+            nn.ReLU(),
+            nn.Dropout(0.6)
+        )
+
+        # Объединение двух глаз + поза
+        self.fc1 = nn.Linear(256 * 2, 128)
+        self.fc2 = nn.Linear(128, 64)
+        self.fc3 = nn.Linear(64, 3)
 
     def forward(self, left_eye, right_eye, head_pose):
-        """
-        Args:
-            left_eye:  (batch, 3, 60, 36)
-            right_eye: (batch, 3, 60, 36)
-            head_pose: (batch, 3)  — [pitch, yaw, roll]
-        """
-        # ===== Обработка левого глаза =====
-        x = F.relu(self.conv1(left_eye))
+        # ===== Поза на входе =====
+        head_pose_tiled = head_pose.view(-1, 3, 1, 1).expand(-1, -1, 60, 36)
+        left_input = torch.cat([left_eye, head_pose_tiled], dim=1).float()
+        right_input = torch.cat([right_eye, head_pose_tiled], dim=1).float()
+
+        # ===== Левый глаз =====
+        x = F.relu(self.bn1(self.conv1(left_input)))
         x = self.pool1(x)
-        x = F.relu(self.conv2(x))
+        x = F.relu(self.bn2(self.conv2(x)))
         x = self.pool2(x)
+        x = F.relu(self.bn3(self.conv3(x)))
+        x = self.pool3(x)
+        x = F.relu(self.bn4(self.conv4(x)))
+        x = self.pool4(x)
+        x = x.view(x.size(0), -1)
+        x = self.fc_eye(x)
 
-        x = F.relu(self.conv3(x))
-
-        x = x.view(x.size(0), -1)  # flatten
-        x = F.relu(self.fc_eye(x))
-
-        # ===== Обработка правого глаза (те же веса) =====
-        y = F.relu(self.conv1(right_eye))
+        # ===== Правый глаз =====
+        y = F.relu(self.bn1(self.conv1(right_input)))
         y = self.pool1(y)
-        y = F.relu(self.conv2(y))
+        y = F.relu(self.bn2(self.conv2(y)))
         y = self.pool2(y)
-
-        y = F.relu(self.conv3(y))
-
+        y = F.relu(self.bn3(self.conv3(y)))
+        y = self.pool3(y)
+        y = F.relu(self.bn4(self.conv4(y)))
+        y = self.pool4(y)
         y = y.view(y.size(0), -1)
-        y = F.relu(self.fc_eye(y))
+        y = self.fc_eye(y)
 
         # ===== Объединение =====
-        combined = torch.cat([x.float(), y.float(), head_pose.squeeze(-1).float()], dim=1)  # (128+128+3) = 259
+        combined = torch.cat([x, y], dim=1)
         z = F.relu(self.fc1(combined))
-        z = self.dropout(z)
-        gaze = self.fc2(z)
+        z = F.relu(self.fc2(z))
+        gaze = self.fc3(z)
 
+        # ===== Нормализация выхода =====
+        gaze = F.normalize(gaze, p=2, dim=1)
         return gaze
