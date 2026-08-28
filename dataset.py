@@ -1,23 +1,24 @@
-import copy
-
+from pathlib import Path
 from torch.utils.data import Dataset
 import GetNormalize
 import cv2
 import scipy.io as sio
 import numpy as np
-import random
-
+import dataInference
 import NormalizeFace
 
 class MPIIGazesDataset(Dataset):
-    def __init__(self, is_train=True, write_creation_process=False):
+    def __init__(self, is_train=True, write_creation_process=False, inference=False):
         #Сделать лист с инфой
         self.learner = []
         six_point_face = sio.loadmat(r'D:\MPIIGaze\MPIIGaze\6 points-based face model.mat')
+
+        #Для валидации - участник №14, для тренировки - остальные
         if is_train:
-            participations_range = range(0,14)
+            participations_range = range(0, 14)
         else:
             participations_range = [14]
+
         for participant in participations_range:
             if participant < 10:
                 participant = "0"+str(participant)
@@ -48,3 +49,5 @@ class MPIIGazesDataset(Dataset):
         # if self.transform:
         #     image = self.transform(image)
         return left_eye, right_eye, euler_angles, gaze_vector
+
+ae = MPIIGazesDataset(inference=True)

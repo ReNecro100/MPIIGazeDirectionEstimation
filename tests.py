@@ -1,12 +1,12 @@
-import torch
-
-# Проверка доступности GPU
-print("CUDA доступна:", torch.cuda.is_available())
-
-# Вывод названия вашей видеокарты
-if torch.cuda.is_available():
-    print("Ваша видеокарта:", torch.cuda.get_device_name(0))
-
+# import torch
+#
+# # Проверка доступности GPU
+# print("CUDA доступна:", torch.cuda.is_available())
+#
+# # Вывод названия вашей видеокарты
+# if torch.cuda.is_available():
+#     print("Ваша видеокарта:", torch.cuda.get_device_name(0))
+#
 # import matplotlib.pyplot as plt
 # import math
 # import scipy.io as sio
@@ -39,11 +39,12 @@ if torch.cuda.is_available():
 # xs.append(left_eye[0])
 # ys.append(left_eye[1])
 #
-# plt.axis([0,1280,0,720])
+# #plt.axis([0,1280,0,720])
 # plt.title('My first plot')
 # plt.plot(xs,ys,'ro')
 # plt.show()
-
+print(r"D:\MPIIGaze\MPIIGaze\Data\Original\p02\day02\0007.jpg"[-8:][:4]) #0007.jpg
+print(r"D:\MPIIGaze\MPIIGaze\Data\Original\p02\day02\0007.jpg"[:-8]) #ОСТАЛЬНОЕ
 
 # mat_data = sio.loadmat('D:\MPIIGaze\MPIIGaze\\6 points-based face model.mat')
 # print(mat_data.get('model'))
