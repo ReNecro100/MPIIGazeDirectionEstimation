@@ -4,6 +4,7 @@ import dataInference
 import scipy.io as sio
 from pathlib import Path
 import numpy as np
+import pickle
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
@@ -14,6 +15,7 @@ model.load_state_dict(checkpoint)
 model.eval()
 
 six_point_face = sio.loadmat(r'D:\MPIIGaze\MPIIGaze\6 points-based face model.mat')
+counter = 0
 
 # if is_train:
 #     participations_range = range(0, 14)
@@ -21,7 +23,6 @@ six_point_face = sio.loadmat(r'D:\MPIIGaze\MPIIGaze\6 points-based face model.ma
 #     participations_range = [14]
 
 participations_range = range(0, 14)
-counter = 0
 
 for participant in participations_range:
     if participant < 10:
@@ -30,6 +31,7 @@ for participant in participations_range:
         participant = str(participant)
     camera = sio.loadmat(rf'D:\MPIIGaze\MPIIGaze\Data\Original\p{participant}\Calibration\Camera.mat')
     target_dir = Path(rf"D:\MPIIGaze\MPIIGaze\Data\Original\p{participant}")
+
     for dr in [x for x in target_dir.iterdir() if x.is_dir() and x.name[-11:] != "Calibration"]:
         with open(str(dr) + r"\annotation.txt", "r", encoding="utf-8") as f:
             annotations = f.readlines()
@@ -38,7 +40,6 @@ for participant in participations_range:
                 annotation_num = int(path.name[-8:][:4]) - 1
                 a = dataInference.NormalizeFaceInference(six_point_face, str(dr)+'\\' +path.name, camera, annotations[annotation_num])
 
-                counter += 1
                 left_eye = torch.tensor(a["left_eye"], dtype=torch.float32).unsqueeze(0).to(device)  # (1, 3, 60, 36)
                 right_eye = torch.tensor(a["right_eye"], dtype=torch.float32).unsqueeze(0).to(device)
                 head_pose = torch.tensor(a["euler_angles"], dtype=torch.float32).unsqueeze(0) .to(device) # (1, 3)
@@ -46,4 +47,9 @@ for participant in participations_range:
                 # Подаём в модель
                 result = model(left_eye, right_eye, head_pose)
 
+                with open(r"D:\MPIIGaze\inference.bin", "ab") as file:
+                    pickle.dump([left_eye, right_eye, head_pose, result], file)
+
+                counter += 1
                 print(result, counter)
+                del left_eye, right_eye, head_pose, result

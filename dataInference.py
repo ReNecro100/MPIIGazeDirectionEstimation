@@ -2,34 +2,6 @@ import numpy as np
 import cv2
 
 def NormalizeFaceInference(six_point_face, path, camera, data):
-    # # 1. 3D-модель - ТРАНСПОНИРУЕМ!
-    # model_points_raw = np.array(six_point_face['model'], dtype=np.float64)
-    #
-    # data = data.split(" ")
-    # rotation_vector = np.array([float(data[29]), float(data[30]), float(data[31])], dtype=np.float32)
-    # translation_vector = np.array([float(data[32]), float(data[33]), float(data[34])], dtype=np.float32)
-    #
-    # # model_points = model_points_raw.T  # <-- (3,6) -> (6,3)
-    #
-    # camera_matrix = camera['cameraMatrix'].reshape(3, 3).astype(np.float64)
-    # dist_coeffs = camera['distCoeffs'].reshape(-1, 1).astype(np.float64)
-    #
-    # projected_points, _ = cv2.projectPoints(
-    #     model_points,
-    #     rotation_vector,
-    #     translation_vector,
-    #     camera_matrix,
-    #     dist_coeffs
-    # )
-    #
-    # projected_points = projected_points.reshape(-1, 2)
-    #
-    # canvas = cv2.imread(path)
-    #
-    # M, _ = cv2.estimateAffinePartial2D(
-    #     projected_points, model_points
-    # )
-
 
     # 1. 3D-модель (исходная)
     model_points_raw = np.array(six_point_face['model'], dtype=np.float64)  # (3, 6)
