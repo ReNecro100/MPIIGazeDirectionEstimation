@@ -8,6 +8,8 @@ import dataInference
 import NormalizeFace
 import torch
 import pickle
+import os
+import glob
 
 class MPIIGazesDataset(Dataset):
     def __init__(self, is_train=True, write_creation_process=False):
@@ -47,25 +49,6 @@ class MPIIGazesDataset(Dataset):
         right_eye = self.learner[idx]['right_eye']
         euler_angles = self.learner[idx]['euler_angles']
         gaze_vector = self.learner[idx]['gaze_vector']  # numpy array
-        gaze_vector = gaze_vector / np.linalg.norm(gaze_vector)  # нормализация через numpy
-
-        return left_eye, right_eye, euler_angles, gaze_vector
-
-class MPIIGazesDatasetInference(Dataset):
-    def __init__(self, path, is_train=True):
-        self.path = path
-        if is_train:
-            self.i = 0
-        else:
-            self.i = 170_000
-    def __len__(self):
-        return len(self.dataset)
-
-    def __getitem__(self, idx):
-        left_eye = self.dataset[idx][0]
-        right_eye = self.dataset[idx][1]
-        euler_angles = self.dataset[idx][2]
-        gaze_vector = self.dataset[idx][3]  # numpy array
         gaze_vector = gaze_vector / np.linalg.norm(gaze_vector)  # нормализация через numpy
 
         return left_eye, right_eye, euler_angles, gaze_vector
