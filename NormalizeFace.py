@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import linecache
 
-def NormalizeFace(six_point_face, path, rtvecs, camera):
+def NormalizeFace(six_point_face, rtvecs, camera, path="", binary_image=0):
     text = rtvecs['image_info']
     image_points = np.array([
         [float(text[1]), float(text[2])],  # внешний левый (индекс 0)
@@ -35,7 +35,10 @@ def NormalizeFace(six_point_face, path, rtvecs, camera):
     projected_points = projected_points.reshape(-1, 2)
 
     # 4. Draw the projected points on an empty 640x480 canvas
-    canvas = cv2.imread(path+'/'+rtvecs["image_info"][0])
+    if path!="":
+        canvas = cv2.imread(path + '/' + rtvecs["image_info"][0])
+    else:
+        canvas = binary_image
 
     M, _ = cv2.estimateAffinePartial2D(
         image_points, projected_points
@@ -86,14 +89,25 @@ def NormalizeFace(six_point_face, path, rtvecs, camera):
     #Нужен выход - gaze vector:
     #day16/0151.jpg
 
-    small_path = rtvecs["image_info"][0]
-    line = linecache.getline(path+'/'+small_path.split('/')[0]+"/annotation.txt", int(small_path.split('/')[1][:4]))
-    line = line.split(' ')
 
-    gaze_vector = np.array([float(line[26]),float(line[27]),float(line[28])])
-    return {
-        "left_eye": left_eye.transpose(2, 1, 0),
-        "right_eye": right_eye.transpose(2, 1, 0),
-        "euler_angles": euler_angles,
-        "gaze_vector": gaze_vector,
-    }
+    if path != "":
+        small_path = rtvecs["image_info"][0]
+        line = linecache.getline(path+'/'+small_path.split('/')[0]+"/annotation.txt", int(small_path.split('/')[1][:4]))
+        line = line.split(' ')
+
+        gaze_vector = np.array([float(line[26]),float(line[27]),float(line[28])])
+
+        toreturn = {
+            "left_eye": left_eye.transpose(2, 1, 0),
+            "right_eye": right_eye.transpose(2, 1, 0),
+            "euler_angles": euler_angles,
+            "gaze_vector": gaze_vector,
+        }
+    else:
+        toreturn = {
+            "left_eye": left_eye.transpose(2, 1, 0),
+            "right_eye": right_eye.transpose(2, 1, 0),
+            "euler_angles": euler_angles,
+        }
+
+    return toreturn

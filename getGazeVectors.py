@@ -4,8 +4,6 @@ from torch import nn
 import dataInference
 import scipy.io as sio
 from pathlib import Path
-import numpy as np
-import pickle
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)

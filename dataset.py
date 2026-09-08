@@ -38,7 +38,7 @@ class MPIIGazesDataset(Dataset):
                 if write_creation_process:
                     print(f"p{participant}: {idx}/{len(strinks)}")
                 a = GetNormalize.yes(i, six_point_face, camera)
-                b = NormalizeFace.NormalizeFace(six_point_face, f'D:\MPIIGaze\MPIIGaze\Data\Original\p{participant}', a, camera)
+                b = NormalizeFace.NormalizeFace(six_point_face, a, camera, f'D:\MPIIGaze\MPIIGaze\Data\Original\p{participant}')
                 self.learner.append(b)
 
     def __len__(self):
