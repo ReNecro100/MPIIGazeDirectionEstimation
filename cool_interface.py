@@ -9,29 +9,34 @@ import GetNormalize
 import NeuroNet
 import NormalizeFace
 
-def gaze_to_pixel(gaze_vector, screen_res=(1920, 1080)):
-    distance = 600
-    sensitivity = 0.8
 
-    # 1. Проецируем в миллиметры (с инверсией Y)
-    x_mm = gaze_vector[0] * distance * sensitivity
-    y_mm = -gaze_vector[1] * distance * sensitivity  # ← ОДНА инверсия
+def gaze_to_pixel(gaze_vector, screen_res=(1920, 1080), distance_to_screen=100):
+    """
+    gaze_vector: единичный вектор (из модели)
+    distance_to_screen: реальное расстояние до экрана в мм (подбери под себя)
+    """
+    # 1. Масштабируем вектор до реальных миллиметров
+    #    z-компонента = расстояние до экрана (известно)
+    scale = distance_to_screen / gaze_vector[2]  # масштабный коэффициент
 
-    # 2. Размер экрана
+    x_mm = gaze_vector[0] * scale
+    y_mm = gaze_vector[1] * scale
+
+    # 2. Размер экрана в мм (подбери под свой монитор)
     screen_width_mm = 530
     screen_height_mm = 290
 
-    # 3. Переводим в пиксели (центр экрана — точка отсчёта)
+    # 3. Переводим в пиксели (от центра экрана)
     x_px = (x_mm / screen_width_mm) * screen_res[0] + screen_res[0] / 2
     y_px = (y_mm / screen_height_mm) * screen_res[1] + screen_res[1] / 2
 
-    # 4. НЕ ИНВЕРТИРУЙ Y ЗДЕСЬ! (уже инвертировали выше)
-    # y_px = screen_res[1] - y_px   ← ЗАКОММЕНТИРУЙ!
+    # 4. Инвертируем Y (OpenCV)
+    y_px = screen_res[1] - y_px
 
     # 5. Обрезаем по границам
     x_px = max(0, min(screen_res[0], int(x_px)))
     y_px = max(0, min(screen_res[1], int(y_px)))
-    print(f"gaze_y: {gaze[1]}")
+
     return int(x_px), int(y_px)
 
 
@@ -68,6 +73,7 @@ cap.set(cv2.CAP_PROP_FPS, 5)
 if not cap.isOpened():
     print("Не удалось открыть камеру")
 else:
+    count = 0
     while cap.isOpened():
         # Чтение одного кадра
         ret, frame = cap.read()
@@ -123,6 +129,7 @@ else:
 
             left_eye = b["left_eye"]
             right_eye = b["right_eye"]
+
             head_pose = b["euler_angles"]
 
             result = model(
@@ -150,14 +157,15 @@ else:
 
             # Показываем
             cv2.imshow("Gaze Tracker", screen)
-            if cv2.waitKey(1) & 0xFF == ord('q'):  # обновление каждую миллисекунду
-                cv2.destroyAllWindows()
-                break
+            # if cv2.waitKey(1) & 0xFF == ord('q'):  # обновление каждую миллисекунду
+            #     cv2.destroyAllWindows()
+            #     break
 
-            #cv2.waitKey(1)
-            #cv2.destroyAllWindows()
+            cv2.waitKey(1)
+            count+=1
         else:
             print("Лицо не обнаружено")
 
 # Обязательно освобождаем ресурс камеры
 cap.release()
+cv2.destroyAllWindows()

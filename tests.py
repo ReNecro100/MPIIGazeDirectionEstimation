@@ -78,3 +78,9 @@ print(r"D:\MPIIGaze\MPIIGaze\Data\Original\p02\day02\0007.jpg"[:-8]) #ОСТАЛ
 # plt.title('6p')
 # plt.plot(greek_list_x, greek_list_y,'ro')
 # plt.show()
+
+a = 0
+for i in [-0.7224753,   0.27920786,  0.63251275]:
+    a += i*i
+    print(i*i)
+print(a)

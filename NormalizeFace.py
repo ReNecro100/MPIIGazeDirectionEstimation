@@ -97,6 +97,7 @@ def NormalizeFace(six_point_face, rtvecs, camera, path="", binary_image=0):
 
         gaze_vector = np.array([float(line[26]),float(line[27]),float(line[28])])
 
+
         toreturn = {
             "left_eye": left_eye.transpose(2, 1, 0),
             "right_eye": right_eye.transpose(2, 1, 0),
@@ -104,6 +105,10 @@ def NormalizeFace(six_point_face, rtvecs, camera, path="", binary_image=0):
             "gaze_vector": gaze_vector,
         }
     else:
+        cv2.imshow("asdasd", normalized)  # показываем как есть
+        cv2.imshow("Left Eye (HWC)", left_eye)  # показываем как есть
+        cv2.imshow("Right Eye (HWC)", right_eye)
+        cv2.waitKey(0)
         toreturn = {
             "left_eye": left_eye.transpose(2, 1, 0),
             "right_eye": right_eye.transpose(2, 1, 0),
