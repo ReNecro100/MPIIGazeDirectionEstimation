@@ -47,13 +47,28 @@ def NormalizeFace(six_point_face, rtvecs, camera, path="", binary_image=0):
     h, w = canvas.shape[:2]
     normalized = cv2.warpAffine(canvas, M, (w, h))
 
-    # Левый глаз (индексы 0 и 1 — внешний и внутренний)
-    left_center_x = int((projected_points[0][0] + projected_points[1][0]) / 2)
-    left_center_y = int((projected_points[0][1] + projected_points[1][1]) / 2)
+    # projected_points = cv2.transform(
+    #     projected_points.reshape(1, -1, 2), M
+    # ).reshape(-1, 2)
+    #
+    # # Левый глаз (индексы 0 и 1 — внешний и внутренний)
+    # left_center_x = int((projected_points[0][0] + projected_points[1][0]) / 2)
+    # left_center_y = int((projected_points[0][1] + projected_points[1][1]) / 2)
+    #
+    # # Правый глаз (индексы 2 и 3 — внешний и внутренний)
+    # right_center_x = int((projected_points[2][0] + projected_points[3][0]) / 2)
+    # right_center_y = int((projected_points[2][1] + projected_points[3][1]) / 2)
 
-    # Правый глаз (индексы 2 и 3 — внешний и внутренний)
-    right_center_x = int((projected_points[2][0] + projected_points[3][0]) / 2)
-    right_center_y = int((projected_points[2][1] + projected_points[3][1]) / 2)
+    image_points_transformed = cv2.transform(
+        image_points.reshape(1, -1, 2), M
+    ).reshape(-1, 2)
+
+    # Используй их для вырезания
+    left_center_x = int((image_points_transformed[0][0] + image_points_transformed[2][0]) / 2)
+    left_center_y = int((image_points_transformed[0][1] + image_points_transformed[2][1]) / 2)
+
+    right_center_x = int((image_points_transformed[5][0] + image_points_transformed[3][0]) / 2)
+    right_center_y = int((image_points_transformed[5][1] + image_points_transformed[3][1]) / 2)
 
     # Вырезаем квадрат 60x60 вокруг центра
     eye_size_x = 30  # половина размера (итого 60x36)
@@ -68,12 +83,17 @@ def NormalizeFace(six_point_face, rtvecs, camera, path="", binary_image=0):
                 ]
 
     left_eye = left_eye.astype(np.float32) / 255.0
+    cv2.circle(normalized, np.array([left_center_x, left_center_y], dtype=int), 2, (0, 0, 0), 2)
     right_eye = right_eye.astype(np.float32) / 255.0
+    cv2.circle(normalized, np.array([right_center_x, right_center_y], dtype=int), 2, (0, 0, 0), 2)
 
 
 
+    # for i in range(6):
+    #     cv2.circle(normalized, np.array(projected_points[i], dtype=int), 2, (0, 0, 255), 2)
     for i in range(6):
-        cv2.circle(normalized, np.array(projected_points[i], dtype=int), 2, (0, 0, 255), 2)
+        cv2.circle(normalized, np.array(image_points_transformed[i], dtype=int), 2, (0, 0, 255), 2)
+        cv2.putText(normalized, text=str(i), org=np.array(image_points_transformed[i], dtype=int), fontFace=2, fontScale=1, color=(0, 0, 255), thickness=1)
 
     # cv2.imshow("Projected 3D Points", normalized)
     # cv2.imshow("Left eye", left_eye)
@@ -105,10 +125,9 @@ def NormalizeFace(six_point_face, rtvecs, camera, path="", binary_image=0):
             "gaze_vector": gaze_vector,
         }
     else:
-        cv2.imshow("asdasd", normalized)  # показываем как есть
-        cv2.imshow("Left Eye (HWC)", left_eye)  # показываем как есть
-        cv2.imshow("Right Eye (HWC)", right_eye)
-        cv2.waitKey(0)
+        # cv2.imshow("asdasd", normalized)  # показываем как есть
+        # cv2.imshow("Left Eye (HWC)", left_eye)  # показываем как есть
+        # cv2.imshow("Right Eye (HWC)", right_eye)
         toreturn = {
             "left_eye": left_eye.transpose(2, 1, 0),
             "right_eye": right_eye.transpose(2, 1, 0),

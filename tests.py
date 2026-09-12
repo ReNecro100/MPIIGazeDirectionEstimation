@@ -84,3 +84,37 @@ for i in [-0.7224753,   0.27920786,  0.63251275]:
     a += i*i
     print(i*i)
 print(a)
+
+import cv2
+
+# 1. Initialize the camera stream or video file
+cap = cv2.VideoCapture(0)  # Use 'video.mp4' for a file
+
+if not cap.isOpened():
+    print("Error: Could not open video source.")
+    exit()
+
+while True:
+    # 2. Read the next frame sequentially
+    ret, frame = cap.read()
+
+    # Break the loop if the video ends or the camera fails
+    if not ret:
+        print("Failed to grab frame or reached end of video.")
+        break
+
+    # --- Your frame processing operations go here ---
+    # Example: gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+    # 3. Display the updated frame in a window
+    cv2.imshow('Live Stream', frame)
+
+    # 4. CRITICAL: Wait at least 1ms to process GUI window events
+    # This also allows you to exit the loop by pressing the 'q' key
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+# 5. Clean up and release system resources
+cap.release()
+cv2.destroyAllWindows()
+
