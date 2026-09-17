@@ -10,7 +10,7 @@ import NeuroNet
 import NormalizeFace
 
 
-def gaze_to_pixel(gaze_vector, screen_res=(1920, 1080), distance_to_screen=100):
+def gaze_to_pixel(gaze_vector, screen_res=(1920, 1080), distance_to_screen=500):
     """
     gaze_vector: единичный вектор (из модели)
     distance_to_screen: реальное расстояние до экрана в мм (подбери под себя)
@@ -37,7 +37,7 @@ def gaze_to_pixel(gaze_vector, screen_res=(1920, 1080), distance_to_screen=100):
     x_px = max(0, min(screen_res[0], int(x_px)))
     y_px = max(0, min(screen_res[1], int(y_px)))
 
-    return int(x_px), int(y_px)
+    return int(-x_px+screen_res[0]), int(y_px)
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -106,20 +106,23 @@ while True:
 
         # Параметры камеры
         # Приблизительная матрица камеры (для веб-камеры 640x480)
-        focal_length = w
-        center = (w / 2, h / 2)
-        camera_matrix = np.array([
-            [focal_length, 0, center[0]],
-            [0, focal_length, center[1]],
-            [0, 0, 1]
-        ], dtype=np.float32)
 
-        dist_coeffs = np.zeros((4, 1))  # без искажений
+        # focal_length = w
+        # center = (w / 2, h / 2)
+        # camera_matrix = np.array([
+        #     [focal_length, 0, center[0]],
+        #     [0, focal_length, center[1]],
+        #     [0, 0, 1]
+        # ], dtype=np.float32)
+        #
+        # dist_coeffs = np.zeros((4, 1))  # без искажений
+        #
+        # camera = {
+        #     'cameraMatrix': camera_matrix,
+        #     'distCoeffs': dist_coeffs,
+        # }
 
-        camera = {
-            'cameraMatrix': camera_matrix,
-            'distCoeffs': dist_coeffs,
-        }
+        camera = sio.loadmat(r'D:\MPIIGaze\MPIIGaze\Data\Original\p00\Calibration\Camera.mat')
 
         # cv2.imshow('Face Points', frame)
         a = GetNormalize.yes(face_points, six_point_face, camera)
@@ -130,6 +133,7 @@ while True:
         right_eye = b["right_eye"]
 
         head_pose = b["euler_angles"]
+        print(f"Real head_pose: {head_pose}")
 
         result = model(
             torch.tensor(left_eye, dtype=torch.float32).unsqueeze(0).to(device),
@@ -138,6 +142,7 @@ while True:
         )
 
         gaze = result.squeeze().cpu().detach().numpy()
+        #print(f"gaze: {gaze}, z: {gaze[2]}")
 
         x, y = gaze_to_pixel(gaze, (1920, 1080))
 
@@ -149,6 +154,8 @@ while True:
 
         count += 1
         cv2.imshow("frame", screen)
+        cv2.imshow('left_eye', left_eye.transpose(1,2,0))
+        cv2.imshow('right_eye', right_eye.transpose(1, 2, 0))
         if cv2.pollKey() & 0xFF == ord('q'):
             break
     else:
