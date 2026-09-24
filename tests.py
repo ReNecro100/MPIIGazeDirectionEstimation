@@ -43,6 +43,8 @@
 # plt.title('My first plot')
 # plt.plot(xs,ys,'ro')
 # plt.show()
+import torch
+
 print(r"D:\MPIIGaze\MPIIGaze\Data\Original\p02\day02\0007.jpg"[-8:][:4]) #0007.jpg
 print(r"D:\MPIIGaze\MPIIGaze\Data\Original\p02\day02\0007.jpg"[:-8]) #ОСТАЛЬНОЕ
 
@@ -118,39 +120,64 @@ print(r"D:\MPIIGaze\MPIIGaze\Data\Original\p02\day02\0007.jpg"[:-8]) #ОСТАЛ
 # cap.release()
 # cv2.destroyAllWindows()
 
-import scipy.io as sio
-import NormalizeFace
-import dataInference
-import GetNormalize
-import cv2
+# import scipy.io as sio
+# import NormalizeFace
+# import dataInference
+# import GetNormalize
+# import cv2
+#
+# six_point_face = sio.loadmat(r'D:\MPIIGaze\MPIIGaze\6 points-based face model.mat')
+# with open("D:\MPIIGaze\MPIIGaze\Annotation Subset\p05.txt", "r") as f:
+#     annotations = f.readlines()
+#
+# for annotation in annotations:
+#     image_path="D:\MPIIGaze\MPIIGaze\Data\Original\p05\\" + annotation.split(" ")[0]
+#     with open(f"D:\MPIIGaze\MPIIGaze\Data\Original\p05\\{annotation.split(" ")[0][:5]}\\annotation.txt", "r") as f:
+#         for i in range(int(annotation.split(" ")[0][-8:][:4])):
+#             annotation_line = f.readline()
+#     camera = sio.loadmat(r'D:\MPIIGaze\MPIIGaze\Data\Original\p05\Calibration\Camera.mat')
+#
+#     b1 = dataInference.NormalizeFaceInference(six_point_face, image_path, camera, annotation_line)
+#
+#     # print("=== NormalizeFaceInference ===")
+#     print(f"left_eye: {b1['left_eye'].shape}")
+#     print(f"right_eye: {b1['right_eye'].shape}")
+#     print(f"euler_angles: {b1['euler_angles'].flatten()}")
+#
+#     # cv2.imshow("Inference: Left Eye", b1["left_eye"].transpose(1, 2, 0))
+#     # cv2.imshow("Inference: Right Eye", b1["right_eye"].transpose(1, 2, 0))
+#
+#     image_path_not_full="D:\MPIIGaze\MPIIGaze\Data\Original\p05"
+#     anl = annotation
+#
+#     # Сначала подготовь rtvecs через GetNormalize.yes
+#
+#     cv2.imshow("Real: Left Eye", cv2.imread(image_path))
+#     cv2.waitKey(0)
+#
+#     #rtvecs = GetNormalize.give_this_function_a_proper_name_someday(image_path, six_point_face, camera)
+#     print("=== MediaPipe ===")
+#     #print(rtvecs["rotation_vector"], rtvecs["translation_vector"])
+#
+#     print("=== Annotation ===")
+#     rtvecs = GetNormalize.yes(anl.split(" "), six_point_face, camera)
+#     print(rtvecs["rotation_vector"], rtvecs["translation_vector"])
+#
+#     # print("=== yes ===")
+#     # print(f"rotation_vector: {rtvecs['rotation_vector'].flatten()}")
+#     # print(f"translation_vector: {rtvecs['translation_vector'].flatten()}")
+#
+#     b2 = NormalizeFace.NormalizeFace(six_point_face, rtvecs, camera, path=image_path_not_full)
+#
+#     print("=== NormalizeFace ===")
+#     print(f"left_eye: {b2['left_eye'].shape}")
+#     print(f"right_eye: {b2['right_eye'].shape}")
+#     print(f"euler_angles: {b2['euler_angles'].flatten()}")
+#
+#     cv2.imshow("Real: Left Eye", b2['left_eye'].transpose(2, 1, 0))
+#     cv2.imshow("ffff: Left Eye", b1['left_eye'].transpose(2, 1, 0))
+#     cv2.waitKey(0)
+#
+#     print('\n\n\n')
 
-six_point_face = sio.loadmat(r'D:\MPIIGaze\MPIIGaze\6 points-based face model.mat')
-image_path="D:\MPIIGaze\MPIIGaze\Data\Original\p00\day37/0016.jpg"
-annotation_line = "489 366 503 357 521 356 536 362 520 368 504 370 629 362 645 356 663 357 678 365 662 369 645 368 909 108 -86.803040 22.520325 -15.746811 -0.193060 0.018003 -0.005528 -19.341516 0.192934 460.505646 -52.540459 0.432873 461.082031 13.857428 -0.047004 459.929260"
-camera = sio.loadmat(r'D:\MPIIGaze\MPIIGaze\Data\Original\p00\Calibration\Camera.mat')
-
-b1 = dataInference.NormalizeFaceInference(six_point_face, image_path, camera, annotation_line)
-
-print("=== NormalizeFaceInference ===")
-print(f"left_eye: {b1['left_eye'].shape}")
-print(f"right_eye: {b1['right_eye'].shape}")
-print(f"euler_angles: {b1['euler_angles'].flatten()}")
-
-cv2.imshow("Train: Left Eye", b1["left_eye"].transpose(1, 2, 0))
-cv2.imshow("Train: Right Eye", b1["right_eye"].transpose(1, 2, 0))
-
-image_path="D:\MPIIGaze\MPIIGaze\Data\Original\p00"
-anl = "day37/0016.jpg 469 362 543 359 621 361 698 364 520 528 644 522 500 358 657 360"
-
-# Сначала подготовь rtvecs через GetNormalize.yes
-rtvecs = GetNormalize.yes(anl.split(" "), six_point_face, camera)
-b2 = NormalizeFace.NormalizeFace(six_point_face, rtvecs, camera, path=image_path)
-
-print("=== NormalizeFace ===")
-print(f"left_eye: {b2['left_eye'].shape}")
-print(f"right_eye: {b2['right_eye'].shape}")
-print(f"euler_angles: {b2['euler_angles'].flatten()}")
-
-cv2.imshow("Real: Left Eye", b2["left_eye"].transpose(1, 2, 0))
-cv2.imshow("Real: Right Eye", b2["right_eye"].transpose(1, 2, 0))
-cv2.waitKey(0)
+# Загрузи СТАРУЮ модель

@@ -8,43 +8,35 @@ import numpy as np
 import GetNormalize
 import NeuroNet
 import NormalizeFace
+import dataInference
+import joblib
 
+model_x = joblib.load("calib_x.pkl")
+model_y = joblib.load("calib_y.pkl")
 
-def gaze_to_pixel(gaze_vector, screen_res=(1920, 1080), distance_to_screen=500):
-    """
-    gaze_vector: единичный вектор (из модели)
-    distance_to_screen: реальное расстояние до экрана в мм (подбери под себя)
-    """
-    # 1. Масштабируем вектор до реальных миллиметров
-    #    z-компонента = расстояние до экрана (известно)
-    scale = distance_to_screen / gaze_vector[2]  # масштабный коэффициент
+def gaze_to_pixel_calibrated(gaze):
+    x_px = model_x.predict(gaze.reshape(1, -1))[0]
+    y_px = model_y.predict(gaze.reshape(1, -1))[0]
+    return int(x_px), int(y_px)
 
-    x_mm = gaze_vector[0] * scale
-    y_mm = gaze_vector[1] * scale
-
-    # 2. Размер экрана в мм (подбери под свой монитор)
-    screen_width_mm = 530
-    screen_height_mm = 290
-
-    # 3. Переводим в пиксели (от центра экрана)
-    x_px = (x_mm / screen_width_mm) * screen_res[0] + screen_res[0] / 2
-    y_px = (y_mm / screen_height_mm) * screen_res[1] + screen_res[1] / 2
-
-    # 4. Инвертируем Y (OpenCV)
-    y_px = screen_res[1] - y_px
-
-    # 5. Обрезаем по границам
-    x_px = max(0, min(screen_res[0], int(x_px)))
-    y_px = max(0, min(screen_res[1], int(y_px)))
-
-    return int(-x_px+screen_res[0]), int(y_px)
+# def gaze_to_pixel(gaze, screen_res=(1920, 1080)):
+#     # X: [-1, 1] → [0, 1920]
+#     x_px = int((gaze[0] + 1) / 2 * screen_res[0])
+#
+#     # Y: [0, 1] → [1080, 0] (инвертируем, т.к. Y растёт вниз)
+#     y_px = int((1 - gaze[1]) * screen_res[1])
+#
+#     x_px = max(0, min(screen_res[0], x_px))
+#     y_px = max(0, min(screen_res[1], y_px))
+#
+#     return x_px, y_px
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
 
 model = NeuroNet.GazeCNN().to(device)
-checkpoint = torch.load("D:/MPIIGaze/gaze_vector_finder_inference.pth", weights_only=True)
+checkpoint = torch.load("D:/MPIIGaze/gaze_vector_finder.pth", weights_only=True)
 model.load_state_dict(checkpoint)
 
 # Загружаем модель
@@ -62,8 +54,8 @@ options = vision.FaceLandmarkerOptions(
 
 w, h = 1280, 720
 cap = cv2.VideoCapture(0)
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, w)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, h)
 cap.set(cv2.CAP_PROP_FPS, 5)
 landmarker = vision.FaceLandmarker.create_from_options(options)
 
@@ -131,9 +123,7 @@ while True:
 
         left_eye = b["left_eye"]
         right_eye = b["right_eye"]
-
         head_pose = b["euler_angles"]
-        print(f"Real head_pose: {head_pose}")
 
         result = model(
             torch.tensor(left_eye, dtype=torch.float32).unsqueeze(0).to(device),
@@ -142,9 +132,9 @@ while True:
         )
 
         gaze = result.squeeze().cpu().detach().numpy()
-        #print(f"gaze: {gaze}, z: {gaze[2]}")
+        print(f"gaze: {gaze}")
 
-        x, y = gaze_to_pixel(gaze, (1920, 1080))
+        x, y = gaze_to_pixel_calibrated(gaze)
 
         print(f"Точка взгляда: ({x}, {y})")
 

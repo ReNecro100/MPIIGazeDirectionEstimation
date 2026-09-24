@@ -50,25 +50,25 @@ def NormalizeFace(six_point_face, rtvecs, camera, path="", binary_image=0):
     # projected_points = cv2.transform(
     #     projected_points.reshape(1, -1, 2), M
     # ).reshape(-1, 2)
-    #
-    # # Левый глаз (индексы 0 и 1 — внешний и внутренний)
-    # left_center_x = int((projected_points[0][0] + projected_points[1][0]) / 2)
-    # left_center_y = int((projected_points[0][1] + projected_points[1][1]) / 2)
-    #
-    # # Правый глаз (индексы 2 и 3 — внешний и внутренний)
-    # right_center_x = int((projected_points[2][0] + projected_points[3][0]) / 2)
-    # right_center_y = int((projected_points[2][1] + projected_points[3][1]) / 2)
 
     image_points_transformed = cv2.transform(
         image_points.reshape(1, -1, 2), M
     ).reshape(-1, 2)
+    # Левый глаз (индексы 0 и 1 — внешний и внутренний)
+    if path != "":
+        left_center_x = int((projected_points[0][0] + projected_points[1][0]) / 2)
+        left_center_y = int((projected_points[0][1] + projected_points[1][1]) / 2)
 
-    # Используй их для вырезания
-    left_center_x = int((image_points_transformed[0][0] + image_points_transformed[2][0]) / 2)
-    left_center_y = int((image_points_transformed[0][1] + image_points_transformed[2][1]) / 2)
+        # Правый глаз (индексы 2 и 3 — внешний и внутренний)
+        right_center_x = int((projected_points[2][0] + projected_points[3][0]) / 2)
+        right_center_y = int((projected_points[2][1] + projected_points[3][1]) / 2)
+    else:
+        # Используй их для вырезания
+        left_center_x = int((image_points_transformed[0][0] + image_points_transformed[2][0]) / 2)
+        left_center_y = int((image_points_transformed[0][1] + image_points_transformed[2][1]) / 2)
 
-    right_center_x = int((image_points_transformed[5][0] + image_points_transformed[3][0]) / 2)
-    right_center_y = int((image_points_transformed[5][1] + image_points_transformed[3][1]) / 2)
+        right_center_x = int((image_points_transformed[5][0] + image_points_transformed[3][0]) / 2)
+        right_center_y = int((image_points_transformed[5][1] + image_points_transformed[3][1]) / 2)
 
     # Вырезаем квадрат 60x60 вокруг центра
     eye_size_x = 30  # половина размера (итого 60x36)
