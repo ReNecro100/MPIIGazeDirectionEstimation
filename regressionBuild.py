@@ -4,12 +4,14 @@ from sklearn.pipeline import make_pipeline
 import numpy as np
 
 # Загружаем данные
-gaze_samples = np.load("calibration_gaze.npy")    # (9, 3)
+gaze_samples = np.load("calibration_gaze.npy") [:, :2]   # (9, 3)
 points = np.load("calibration_points.npy")         # (9, 2)
 
+print(f"Gaze при калибровке: {gaze_samples}")
+
 # Полиномиальная регрессия 2-й степени
-model_x = make_pipeline(PolynomialFeatures(2), LinearRegression())
-model_y = make_pipeline(PolynomialFeatures(2), LinearRegression())
+model_x = LinearRegression()
+model_y = LinearRegression()
 
 # Обучаем
 model_x.fit(gaze_samples, points[:, 0])  # gaze → x_px

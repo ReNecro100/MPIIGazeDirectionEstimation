@@ -17,6 +17,10 @@ model_y = joblib.load("calib_y.pkl")
 def gaze_to_pixel_calibrated(gaze):
     x_px = model_x.predict(gaze.reshape(1, -1))[0]
     y_px = model_y.predict(gaze.reshape(1, -1))[0]
+    x_px = 0 if x_px < 0 else x_px
+    y_px = 0 if y_px < 0 else y_px
+    x_px = 1920 if x_px > 1920 else x_px
+    y_px = 1080 if y_px > 1080 else y_px
     return int(x_px), int(y_px)
 
 # def gaze_to_pixel(gaze, screen_res=(1920, 1080)):
@@ -134,7 +138,7 @@ while True:
         gaze = result.squeeze().cpu().detach().numpy()
         print(f"gaze: {gaze}")
 
-        x, y = gaze_to_pixel_calibrated(gaze)
+        x, y = gaze_to_pixel_calibrated(gaze[:2])
 
         print(f"Точка взгляда: ({x}, {y})")
 

@@ -23,6 +23,9 @@ calibration_points = [
     (1820, 980),  # правый низ
 ]
 
+#Ещё раз
+calibration_points.extend(calibration_points)
+
 gaze_samples = []  # список gaze для каждой точки
 
 w, h = 1280, 720
