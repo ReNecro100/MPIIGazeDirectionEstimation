@@ -14,10 +14,12 @@ val_dataloader = DataLoader(dataset=val_dst, batch_size=32, shuffle=True, drop_l
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
-model = NeuroNet.GazeCNN().to(device)
+#model = NeuroNet.GazeCNN().to(device)
+model = NeuroNet.LeNet().to(device)
 print(sum([p.numel() for p in model.parameters() if p.requires_grad]))
 
-criterion = nn.CosineEmbeddingLoss()
+#criterion = nn.CosineEmbeddingLoss()
+criterion = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5, factor=0.5)
 
@@ -40,7 +42,7 @@ for epoch in range(epochs):
         # images = torch.flatten(images, start_dim=1)
         # For linear models
         output = model(left_eye, right_eye, euler_angles)
-        loss = criterion(output, gaze_vector, torch.ones(output.size(0)).to(device))
+        loss = criterion(output.float(), gaze_vector.float()) #, torch.ones(output.size(0)).to(device)
 
         optimizer.zero_grad()
         loss.backward()
@@ -52,7 +54,7 @@ for epoch in range(epochs):
             left, right, pose, target = left.to(device), right.to(device), pose.to(device), target.to(device)
 
             output = model(left, right, pose)
-            val_loss = criterion(output, target, torch.ones(output.size(0)).to(device))
+            val_loss = criterion(output, target) #, torch.ones(output.size(0)).to(device)
             total_loss += val_loss.item()  # Суммируем потери
             if epoch == 9:
                 print(output[2], target[2])

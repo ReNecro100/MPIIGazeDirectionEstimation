@@ -14,32 +14,33 @@ import joblib
 model_x = joblib.load("calib_x.pkl")
 model_y = joblib.load("calib_y.pkl")
 
-def gaze_to_pixel_calibrated(gaze):
-    x_px = model_x.predict(gaze.reshape(1, -1))[0]
-    y_px = model_y.predict(gaze.reshape(1, -1))[0]
-    x_px = 0 if x_px < 0 else x_px
-    y_px = 0 if y_px < 0 else y_px
-    x_px = 1920 if x_px > 1920 else x_px
-    y_px = 1080 if y_px > 1080 else y_px
-    return int(x_px), int(y_px)
+# def gaze_to_pixel_calibrated(gaze):
+#     x_px = model_x.predict(gaze.reshape(1, -1))[0]
+#     y_px = model_y.predict(gaze.reshape(1, -1))[0]
+#     x_px = 0 if x_px < 0 else x_px
+#     y_px = 0 if y_px < 0 else y_px
+#     x_px = 1920 if x_px > 1920 else x_px
+#     y_px = 1080 if y_px > 1080 else y_px
+#     return int(x_px), int(y_px)
 
-# def gaze_to_pixel(gaze, screen_res=(1920, 1080)):
-#     # X: [-1, 1] → [0, 1920]
-#     x_px = int((gaze[0] + 1) / 2 * screen_res[0])
-#
-#     # Y: [0, 1] → [1080, 0] (инвертируем, т.к. Y растёт вниз)
-#     y_px = int((1 - gaze[1]) * screen_res[1])
-#
-#     x_px = max(0, min(screen_res[0], x_px))
-#     y_px = max(0, min(screen_res[1], y_px))
-#
-#     return x_px, y_px
+def gaze_to_pixel(gaze, screen_res=(1920, 1080)):
+    # X: [-1, 1] → [0, 1920]
+    x_px = int((gaze[0] + 1) / 2 * screen_res[0])
+
+    # Y: [0, 1] → [1080, 0] (инвертируем, т.к. Y растёт вниз)
+    y_px = int((1 - gaze[1]) * screen_res[1])
+
+    x_px = max(0, min(screen_res[0], x_px))
+    y_px = max(0, min(screen_res[1], y_px))
+
+    return screen_res[0]-x_px, screen_res[1]-y_px
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
 
-model = NeuroNet.GazeCNN().to(device)
+model = NeuroNet.LeNet().to(device)
+#model = NeuroNet.GazeCNN().to(device)
 checkpoint = torch.load("D:/MPIIGaze/gaze_vector_finder.pth", weights_only=True)
 model.load_state_dict(checkpoint)
 
@@ -60,7 +61,7 @@ w, h = 1280, 720
 cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, w)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, h)
-cap.set(cv2.CAP_PROP_FPS, 5)
+cap.set(cv2.CAP_PROP_FPS, 15)
 landmarker = vision.FaceLandmarker.create_from_options(options)
 
 # Проверка, удалось ли запустить камеру
@@ -138,7 +139,7 @@ while True:
         gaze = result.squeeze().cpu().detach().numpy()
         print(f"gaze: {gaze}")
 
-        x, y = gaze_to_pixel_calibrated(gaze[:2])
+        x, y = gaze_to_pixel(gaze) #gaze_to_pixel_calibrated(gaze[:2])
 
         print(f"Точка взгляда: ({x}, {y})")
 
@@ -148,8 +149,9 @@ while True:
 
         count += 1
         cv2.imshow("frame", screen)
-        cv2.imshow('left_eye', left_eye.transpose(1,2,0))
-        cv2.imshow('right_eye', right_eye.transpose(1, 2, 0))
+        # cv2.imshow('left_eye', left_eye.transpose(1,2,0))
+        # cv2.imshow('right_eye', right_eye.transpose(1, 2, 0))
+        cv2.imshow('me', frame)
         if cv2.pollKey() & 0xFF == ord('q'):
             break
     else:
