@@ -15,7 +15,8 @@ val_dataloader = DataLoader(dataset=val_dst, batch_size=32, shuffle=True, drop_l
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
 #model = NeuroNet.GazeCNN().to(device)
-model = NeuroNet.LeNet().to(device)
+#model = NeuroNet.LeNet().to(device)
+model = NeuroNet.ResNet18().to(device)
 print(sum([p.numel() for p in model.parameters() if p.requires_grad]))
 
 #criterion = nn.CosineEmbeddingLoss()

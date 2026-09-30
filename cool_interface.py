@@ -39,7 +39,8 @@ def gaze_to_pixel(gaze, screen_res=(1920, 1080)):
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
 
-model = NeuroNet.LeNet().to(device)
+model = NeuroNet.ResNet18().to(device)
+#model = NeuroNet.LeNet().to(device)
 #model = NeuroNet.GazeCNN().to(device)
 checkpoint = torch.load("D:/MPIIGaze/gaze_vector_finder.pth", weights_only=True)
 model.load_state_dict(checkpoint)
