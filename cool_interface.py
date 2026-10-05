@@ -5,23 +5,12 @@ from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 import scipy.io as sio
 import numpy as np
-import GetNormalize
-import NeuroNet
-import NormalizeFace
-import dataInference
-import joblib
 
-model_x = joblib.load("calib_x.pkl")
-model_y = joblib.load("calib_y.pkl")
+from create_model.models.lenet import lenet
+from create_model.processing import *
+from create_model.processing.get_rtvecs import get_rtvecs
+from create_model.processing.normalize_face import normalize_face
 
-# def gaze_to_pixel_calibrated(gaze):
-#     x_px = model_x.predict(gaze.reshape(1, -1))[0]
-#     y_px = model_y.predict(gaze.reshape(1, -1))[0]
-#     x_px = 0 if x_px < 0 else x_px
-#     y_px = 0 if y_px < 0 else y_px
-#     x_px = 1920 if x_px > 1920 else x_px
-#     y_px = 1080 if y_px > 1080 else y_px
-#     return int(x_px), int(y_px)
 
 def gaze_to_pixel(gaze, screen_res=(1920, 1080)):
     # X: [-1, 1] → [0, 1920]
@@ -39,9 +28,9 @@ def gaze_to_pixel(gaze, screen_res=(1920, 1080)):
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
 
-model = NeuroNet.ResNet18().to(device)
-#model = NeuroNet.LeNet().to(device)
-#model = NeuroNet.GazeCNN().to(device)
+#models = NeuroNet.ResNet18().to(device)
+model = lenet().to(device)
+#models = NeuroNet.GazeCNN().to(device)
 checkpoint = torch.load("D:/MPIIGaze/gaze_vector_finder.pth", weights_only=True)
 model.load_state_dict(checkpoint)
 
@@ -123,8 +112,8 @@ while True:
         camera = sio.loadmat(r'D:\MPIIGaze\MPIIGaze\Data\Original\p00\Calibration\Camera.mat')
 
         # cv2.imshow('Face Points', frame)
-        a = GetNormalize.yes(face_points, six_point_face, camera)
-        b = NormalizeFace.NormalizeFace(six_point_face, a, camera,
+        a = get_rtvecs(face_points, six_point_face, camera)
+        b = normalize_face(six_point_face, a, camera,
                                         binary_image=frame)
 
         left_eye = b["left_eye"]
@@ -150,8 +139,8 @@ while True:
 
         count += 1
         cv2.imshow("frame", screen)
-        # cv2.imshow('left_eye', left_eye.transpose(1,2,0))
-        # cv2.imshow('right_eye', right_eye.transpose(1, 2, 0))
+        cv2.imshow('left_eye', left_eye.transpose(1,2,0))
+        cv2.imshow('right_eye', right_eye.transpose(1, 2, 0))
         cv2.imshow('me', frame)
         if cv2.pollKey() & 0xFF == ord('q'):
             break

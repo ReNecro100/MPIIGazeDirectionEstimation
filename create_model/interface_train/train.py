@@ -1,12 +1,11 @@
 import NeuroNet
 import torch
 from torch import nn
-import dataInference
+from interface_train import normalize_face
 import scipy.io as sio
 from pathlib import Path
 
 import numpy as np
-import cv2
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
@@ -47,7 +46,7 @@ for participant in participations_range:
         for path in dr.iterdir():
             if path.is_file() and path.name.endswith(".jpg"):
                 annotation_num = int(path.name[-8:][:4]) - 1
-                a = dataInference.NormalizeFaceInference(six_point_face, str(dr)+'\\' +path.name, camera, annotations[annotation_num])
+                a = dataInference.NormalizeFaceInference(six_point_face, str(dr) + '\\' + path.name, camera, annotations[annotation_num])
 
                 left_eye = a["left_eye"]
                 right_eye = a["right_eye"]

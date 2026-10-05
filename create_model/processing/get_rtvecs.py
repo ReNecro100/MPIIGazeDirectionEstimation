@@ -4,7 +4,7 @@ import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
-def yes(strink, six_point_face, camera):
+def get_rtvecs(strink, six_point_face, camera):
     # Загружаем 3D-модель - six_point_face
 
     # 1. 3D-модель - ТРАНСПОНИРУЕМ!

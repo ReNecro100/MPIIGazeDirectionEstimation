@@ -1,22 +1,23 @@
-import torch
 from matplotlib import pyplot as plt
-from torch import nn
 from tqdm import tqdm
-import dataset, NeuroNet
+
+from annotation_dataset import *
+from create_model.models.lenet import *
+
 from torch.utils.data import DataLoader
 
-train_dst = dataset.MPIIGazesDataset(write_creation_process=True)
+train_dst = MPII_gaze_dataset(write_creation_process=True)
 print(len(train_dst))
-val_dst = dataset.MPIIGazesDataset(is_train=False)
+val_dst = MPII_gaze_dataset(is_train=False)
 
 train_dataloader = DataLoader(dataset=train_dst, batch_size=32, shuffle=True, drop_last=True)
 val_dataloader = DataLoader(dataset=val_dst, batch_size=32, shuffle=True, drop_last=True)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
-#model = NeuroNet.GazeCNN().to(device)
-#model = NeuroNet.LeNet().to(device)
-model = NeuroNet.ResNet18().to(device)
+#models = NeuroNet.GazeCNN().to(device)
+model = lenet().to(device)
+#models = NeuroNet.ResNet18().to(device)
 print(sum([p.numel() for p in model.parameters() if p.requires_grad]))
 
 #criterion = nn.CosineEmbeddingLoss()

@@ -48,10 +48,10 @@ import torch
 print(r"D:\MPIIGaze\MPIIGaze\Data\Original\p02\day02\0007.jpg"[-8:][:4]) #0007.jpg
 print(r"D:\MPIIGaze\MPIIGaze\Data\Original\p02\day02\0007.jpg"[:-8]) #ОСТАЛЬНОЕ
 
-# mat_data = sio.loadmat('D:\MPIIGaze\MPIIGaze\\6 points-based face model.mat')
-# print(mat_data.get('model'))
+# mat_data = sio.loadmat('D:\MPIIGaze\MPIIGaze\\6 points-based face models.mat')
+# print(mat_data.get('models'))
 # greek_list_x, greek_list_y = [], []
-# for i in mat_data['model']:
+# for i in mat_data['models']:
 #     length = math.sqrt(float(i[0])**2 + float(i[1])**2 + float(i[2])**2)
 #     x = float(i[0])/length
 #     y = float(i[1])/length
@@ -126,7 +126,7 @@ print(r"D:\MPIIGaze\MPIIGaze\Data\Original\p02\day02\0007.jpg"[:-8]) #ОСТАЛ
 # import GetNormalize
 # import cv2
 #
-# six_point_face = sio.loadmat(r'D:\MPIIGaze\MPIIGaze\6 points-based face model.mat')
+# six_point_face = sio.loadmat(r'D:\MPIIGaze\MPIIGaze\6 points-based face models.mat')
 # with open("D:\MPIIGaze\MPIIGaze\Annotation Subset\p05.txt", "r") as f:
 #     annotations = f.readlines()
 #

@@ -1,17 +1,10 @@
-from pathlib import Path
 from torch.utils.data import Dataset
-import GetNormalize
-import cv2
 import scipy.io as sio
-import numpy as np
-import dataInference
-import NormalizeFace
-import torch
-import pickle
-import os
-import glob
 
-class MPIIGazesDataset(Dataset):
+from create_model.processing.normalize_face import *
+from create_model.processing.get_rtvecs import *
+
+class MPII_gaze_dataset(Dataset):
     def __init__(self, is_train=True, write_creation_process=False):
         #Сделать лист с инфой
         self.learner = []
@@ -37,8 +30,8 @@ class MPIIGazesDataset(Dataset):
             for idx, i in enumerate(strinks):
                 if write_creation_process:
                     print(f"p{participant}: {idx}/{len(strinks)}")
-                a = GetNormalize.yes(i, six_point_face, camera)
-                b = NormalizeFace.NormalizeFace(six_point_face, a, camera, f'D:\MPIIGaze\MPIIGaze\Data\Original\p{participant}')
+                a = get_rtvecs(i, six_point_face, camera)
+                b = normalize_face(six_point_face, a, camera, f'D:\MPIIGaze\MPIIGaze\Data\Original\p{participant}')
                 self.learner.append(b)
 
     def __len__(self):
