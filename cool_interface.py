@@ -13,7 +13,7 @@ w, h = 1280, 720
 cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, w)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, h)
-cap.set(cv2.CAP_PROP_FPS, 15)
+cap.set(cv2.CAP_PROP_FPS, 5)
 
 # Проверка, удалось ли запустить камеру
 if not cap.isOpened():
@@ -28,14 +28,14 @@ while True:
 
     url = " http://127.0.0.1:2137/gaze_vector"
 
-    response = requests.post(url, json = {"frame": frame})
+    response = requests.post(url, json = {"frame": frame.tolist()})
 
     if response.status_code == 200:
         data = response.json()
     else:
         data = {}
 
-    x, y = data[0], data[1] #gaze_to_pixel_calibrated(gaze[:2])
+    x, y = data["x"], data["y"] #gaze_to_pixel_calibrated(gaze[:2])
 
     print(f"Точка взгляда: ({x}, {y})")
 
