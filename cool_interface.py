@@ -1,10 +1,5 @@
 import cv2
-import mediapipe as mp
-import torch
 import requests
-from mediapipe.tasks import python
-from mediapipe.tasks.python import vision
-import scipy.io as sio
 import numpy as np
 
 # Подключение к веб-камере (0 — стандартная камера) и какие-то дефолтные настройки
