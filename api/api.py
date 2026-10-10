@@ -1,3 +1,5 @@
+from typing import Any
+
 import cv2
 import mediapipe as mp
 import torch
@@ -8,7 +10,7 @@ import numpy as np
 
 from create_model.models.lenet import lenet
 from fastapi import FastAPI
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 
 from create_model.processing.get_rtvecs import get_rtvecs
 from create_model.processing.normalize_face import normalize_face
@@ -27,6 +29,7 @@ model = lenet().to(device)
 
 checkpoint = torch.load("D:/MPIIGaze/gaze_vector_finder.pth", weights_only=True)
 model.load_state_dict(checkpoint)
+model.eval()
 model_path = r'./api/face_landmarker.task'
 options = vision.FaceLandmarkerOptions(
     base_options=python.BaseOptions(model_asset_path=model_path),
@@ -39,7 +42,7 @@ landmarker = vision.FaceLandmarker.create_from_options(options)
 
 class InputImage(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    frame: list
+    frame: Any
 
 def gaze_to_pixel(gaze, screen_res=(1920, 1080)):
     # X: [-1, 1] → [0, 1920]
@@ -62,7 +65,14 @@ def entrance():
 
 @app.post("/gaze_vector")
 def find_gaze_vector(request: InputImage):
+    if type(request.frame) != list:
+        return {"error": "not list"}
+
     frame = np.array(request.frame, dtype=np.uint8)
+    print(frame.shape)
+
+    if frame.shape[2]!=3 and len(frame.shape)!=3:
+        return {"error": f"Wrong frame size! {frame.shape} instead of (W, H, 3)!"}
 
     rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
@@ -101,7 +111,6 @@ def find_gaze_vector(request: InputImage):
         right_eye = b["right_eye"]
         head_pose = b["euler_angles"]
 
-        model.eval()
         result = model(
             torch.tensor(left_eye, dtype=torch.float32).unsqueeze(0).to(device),
             torch.tensor(right_eye, dtype=torch.float32).unsqueeze(0).to(device),
@@ -111,4 +120,6 @@ def find_gaze_vector(request: InputImage):
         gaze = result.squeeze().cpu().detach().numpy()
         print(gaze)
         return gaze_to_pixel(gaze)
-    return None
+    return {
+        "error": "Couldn't find face points"
+    }

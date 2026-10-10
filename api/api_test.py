@@ -4,6 +4,7 @@ import requests
 
 url = "http://127.0.0.1:2137/gaze_vector"
 frame = cv2.imread(r"Alanwilder.png")
+no_face_frame = cv2.imread(r"boxes.jpg")
 response = requests.post(url, json={"frame": frame.tolist()})
 
 def test_api_response__check_response_status_code__200():
@@ -23,3 +24,16 @@ def test_api_response__are_null__no():
     data = response.json()
     assert data["x"]!=None
     assert data["y"]!=None
+
+def test_api_response__wrong_input_type__fail():
+    fake_response = requests.post(url, json={"frame": 12}).json()
+    assert fake_response["error"]=="not list"
+
+def test_api_response__wrong_input_size__fail():
+    fake_response = requests.post(url, json={"frame": [1,2,3,4]}).json()
+    assert fake_response["error"]
+
+def test_api_response__no_face__fail():
+    fake_response = requests.post(url, json={"frame": no_face_frame.tolist()}).json()
+    print(fake_response)
+    assert fake_response["error"]=="Couldn't find face points"
